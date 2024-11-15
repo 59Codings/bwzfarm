@@ -1,0 +1,89 @@
+local clickedRanked, clickedSolo = {}, {}
+
+local function createScreenGui(p)
+    local sg = Instance.new("ScreenGui", p.PlayerGui)
+    sg.IgnoreGuiInset = true
+
+    local f = Instance.new("Frame", sg)
+    f.Size, f.BackgroundColor3 = UDim2.new(1, 0, 1, 0), Color3.fromRGB(0, 255, 0)
+
+    local queuesButton = Instance.new("TextButton", f)
+    queuesButton.Size, queuesButton.Position, queuesButton.Text, queuesButton.BackgroundColor3 = UDim2.new(0, 200, 0, 50), UDim2.new(0.5, -100, 0.5, -150), "Queues", Color3.fromRGB(150, 150, 150)
+    local uiCorner1 = Instance.new("UICorner", queuesButton)
+
+    local dropdownFrame = Instance.new("Frame", f)
+    dropdownFrame.Size, dropdownFrame.Position, dropdownFrame.BackgroundColor3, dropdownFrame.Visible = UDim2.new(0, 200, 0, 110), UDim2.new(0.5, -100, 0.5, -85), Color3.fromRGB(80, 80, 80), false
+    local uiCorner2 = Instance.new("UICorner", dropdownFrame)
+
+    local rankedButton = Instance.new("TextButton", dropdownFrame)
+    rankedButton.Size, rankedButton.Position, rankedButton.Text, rankedButton.BackgroundColor3 = UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 10), "Ranked", Color3.fromRGB(100, 100, 100)
+    local uiCorner3 = Instance.new("UICorner", rankedButton)
+
+    local soloButton = Instance.new("TextButton", dropdownFrame)
+    soloButton.Size, soloButton.Position, soloButton.Text, soloButton.BackgroundColor3 = UDim2.new(1, -20, 0, 40), UDim2.new(0, 10, 0, 60), "Solo", Color3.fromRGB(100, 100, 100)
+    local uiCorner4 = Instance.new("UICorner", soloButton)
+
+    local queueButtonRanked = Instance.new("TextButton", f)
+    queueButtonRanked.Size, queueButtonRanked.Position, queueButtonRanked.Text, queueButtonRanked.BackgroundColor3, queueButtonRanked.Visible = UDim2.new(0, 200, 0, 50), UDim2.new(0.5, -100, 0.5, 50), "Queue for ranked farm (0/2)", Color3.fromRGB(255, 255, 0), false
+    local uiCorner5 = Instance.new("UICorner", queueButtonRanked)
+
+    local queueButtonSolo = Instance.new("TextButton", f)
+    queueButtonSolo.Size, queueButtonSolo.Position, queueButtonSolo.Text, queueButtonSolo.BackgroundColor3, queueButtonSolo.Visible = UDim2.new(0, 200, 0, 50), UDim2.new(0.5, -100, 0.5, 110), "Queue for solo farm (0/2)", Color3.fromRGB(255, 255, 0), false
+    local uiCorner6 = Instance.new("UICorner", queueButtonSolo)
+
+    local leaveQueueButton = Instance.new("TextButton", f)
+    leaveQueueButton.Size, leaveQueueButton.Position, leaveQueueButton.Text, leaveQueueButton.BackgroundColor3, leaveQueueButton.Visible = UDim2.new(0, 200, 0, 50), UDim2.new(0.5, -100, 0.5, 170), "Leave Queue", Color3.fromRGB(255, 0, 0), false
+    local uiCorner7 = Instance.new("UICorner", leaveQueueButton)
+
+    queuesButton.MouseButton1Click:Connect(function() dropdownFrame.Visible = not dropdownFrame.Visible end)
+    rankedButton.MouseButton1Click:Connect(function() queueButtonRanked.Visible, queueButtonSolo.Visible = true, false end)
+    soloButton.MouseButton1Click:Connect(function() queueButtonRanked.Visible, queueButtonSolo.Visible = false, true end)
+
+    local function updateText()
+        while true do
+            queueButtonRanked.Text = "Queue for ranked farm ("..#clickedRanked.."/2)"
+            queueButtonSolo.Text = "Queue for solo farm ("..#clickedSolo.."/2)"
+            wait(1)
+        end
+    end
+    coroutine.wrap(updateText)()
+
+    local function joinQueue(queue, player, placeId)
+        if not table.find(queue, player) and #queue < 2 then table.insert(queue, player) end
+        if #queue == 2 then
+            local playerList = queue
+            queue = {}
+            for _, v in ipairs(playerList) do game:GetService("TeleportService"):Teleport(placeId, v) end
+        end
+    end
+
+    queueButtonRanked.MouseButton1Click:Connect(function()
+        if #clickedRanked < 2 and not table.find(clickedRanked, p) and #clickedSolo == 0 then
+            table.insert(clickedRanked, p)
+            queueButtonRanked.Visible = false
+            leaveQueueButton.Visible = true
+        end
+    end)
+
+    queueButtonSolo.MouseButton1Click:Connect(function()
+        if #clickedSolo < 2 and not table.find(clickedSolo, p) and #clickedRanked == 0 then
+            table.insert(clickedSolo, p)
+            queueButtonSolo.Visible = false
+            leaveQueueButton.Visible = true
+        end
+    end)
+
+    leaveQueueButton.MouseButton1Click:Connect(function()
+        if table.find(clickedRanked, p) then
+            table.remove(clickedRanked, table.find(clickedRanked, p))
+            queueButtonRanked.Visible = true
+        elseif table.find(clickedSolo, p) then
+            table.remove(clickedSolo, table.find(clickedSolo, p))
+            queueButtonSolo.Visible = true
+        end
+        leaveQueueButton.Visible = false
+    end)
+end
+
+for _, p in ipairs(game.Players:GetPlayers()) do createScreenGui(p) end
+game.Players.PlayerAdded:Connect(createScreenGui)
